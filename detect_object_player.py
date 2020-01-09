@@ -15,14 +15,16 @@ from matplotlib import pyplot as plt
 from PIL import Image
 
 from object_detection.utils import label_map_util
-from object_detection.utils import visualization_utils as vis_uti
+from object_detection.utils import visualization_utils as vis_util
 from object_detection.utils.label_map_util import create_category_index_from_labelmap
+
+import cv2
 
 def create_session(fraction = 0.333):
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction = fraction)
     return tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 
-def run_inference_for_single_image(image, graph):
+def run_inference_for_single_image(sess, image, graph , tensor_dict):
 
     if 'detection_masks' in tensor_dict:
 
@@ -59,7 +61,7 @@ def run_inference_for_single_image(image, graph):
     return output_dict
 
 
-def detect_object_in(image_path , model_path , label_map_path):
+def detect_object_in( model_path , label_map_path , video_src):
     PATH_TO_FROZEN_GRAPH = model_path + '/frozen_inference_graph.pb'
     PATH_TO_LABELS = label_map_path
     detection_graph = tf.Graph()
@@ -71,8 +73,7 @@ def detect_object_in(image_path , model_path , label_map_path):
         od_graph_def.ParseFromString(serialized_graph)
         tf.import_graph_def(od_graph_def, name='')
 
-    category_index = label_map_util
-    create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
+    category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
     with detection_graph.as_default():
         with create_session()  as sess:
             # Get handles to input and output tensors
@@ -88,13 +89,39 @@ def detect_object_in(image_path , model_path , label_map_path):
                 if tensor_name in all_tensor_names:
                     tensor_dict[key] = tf.get_default_graph().get_tensor_by_name(tensor_name)
 
-            print(tensor_dict)
+            cap = cv2.VideoCapture(video_src)
+            video_running = True
+
+            while True:
+                ret , image_np = cap.read()
+
+                output_dict = run_inference_for_single_image(sess,image_np, detection_graph, tensor_dict)
+                vis_util.visualize_boxes_and_labels_on_image_array(
+                        image_np,
+                        output_dict['detection_boxes'],
+                        output_dict['detection_classes'],
+                        output_dict['detection_scores'],
+                        category_index,
+                        instance_masks=output_dict.get('detection_masks'),
+                        use_normalized_coordinates=True,
+                        line_thickness=8)
+                cv_image = cv2.resize(image_np, (800, 600))
+                cv2.imshow("Press q to quit" , cv_image)
+
+                if cv2.waitKey(25) & 0xFF == ord("q"):
+                    cap.release()
+                    cv2.destroyAllWindows()
+                    break
+
+
+
 
 
 def main():
-    detect_object_in(image_path = "/home/musa/Downloads/test4.jpg" ,
-            model_path = "/home/musa/custom_object_detector2/object_detection/models/research/object_detection/result3",
-            label_map_path = "/home/musa/custom_object_detector2/object_detection/models/research/object_detection/training/label_map.pbtxt")
+    detect_object_in(
+            model_path = "/home/musa/custom_object_detector2/object_detection/models/research/object_detection/ssd_mobilenet_v1_coco_2017_11_17",
+            label_map_path = "/home/musa/custom_object_detector2/object_detection/models/research/object_detection/data/mscoco_label_map.pbtxt",
+            video_src = 0)
 
 
 if __name__ == "__main__":
