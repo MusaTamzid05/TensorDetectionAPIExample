@@ -20,6 +20,18 @@ from object_detection.utils.label_map_util import create_category_index_from_lab
 
 import cv2
 
+import argparse
+
+'''
+for video =>
+ python detect_object_player.py --src "/home/musa/test.mp4" --train_model_path "/home/musa/custom_object_detector2/object_detection/models/research/object_detection/ssd_mobilenet_v1_coco_2017_11_17" --label_map_path "/home/musa/custom_object_detector2/object_detection/models/research/object_detection/data/mscoco_label_map.pbtxt"
+
+for webcam =>
+ python detect_object_player.py --src "0" --train_model_path "/home/musa/custom_object_detector2/object_detection/models/research/object_detection/ssd_mobilenet_v1_coco_2017_11_17" --label_map_path "/home/musa/custom_object_detector2/object_detection/models/research/object_detection/data/mscoco_label_map.pbtxt"
+
+
+'''
+
 def create_session(fraction = 0.333):
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction = fraction)
     return tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
@@ -117,11 +129,35 @@ def detect_object_in( model_path , label_map_path , video_src):
 
 
 
-def main():
+def working_example():
     detect_object_in(
             model_path = "/home/musa/custom_object_detector2/object_detection/models/research/object_detection/ssd_mobilenet_v1_coco_2017_11_17",
             label_map_path = "/home/musa/custom_object_detector2/object_detection/models/research/object_detection/data/mscoco_label_map.pbtxt",
             video_src = 0)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--train_model_path', dest = "model_path" , required = True ,   type = str ,  help='the model path after generating inference graph')
+    parser.add_argument('--label_map_path', dest = "label_map_path" , required = True ,   type = str ,  help='path to the label map')
+    parser.add_argument('--src', dest = "src" ,  type = str, required = True ,   help='video src')
+    args = parser.parse_args()
+
+    video_src = args.src
+    model_path = args.model_path
+    label_map_path = args.label_map_path
+
+    try:
+        video_src = int(video_src)
+    except ValueError:
+        pass
+
+
+    detect_object_in(
+            model_path = model_path,
+            label_map_path = label_map_path,
+            video_src = video_src
+            )
 
 
 if __name__ == "__main__":
