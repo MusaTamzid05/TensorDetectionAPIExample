@@ -14,7 +14,6 @@ def get_labels(boxes , classes , scores , category_index , min_score_thresh = .5
         if classes[i] in six.viewkeys(category_index):
             class_name = category_index[classes[i]]["name"]
             score = int(100 * scores[i])
-            print("{} => {}".format(class_name , score))
-            detected_labels.append()
+            detected_labels.append((class_name , score))
 
     return detected_labels
