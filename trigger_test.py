@@ -110,6 +110,7 @@ def detect_object_in( model_path , label_map_path , video_src):
                 ret , image_np = cap.read()
 
                 output_dict = run_inference_for_single_image(sess,image_np, detection_graph, tensor_dict)
+
                 detected_labels = get_labels(
                         output_dict['detection_boxes'],
                         output_dict['detection_classes'],
@@ -117,7 +118,7 @@ def detect_object_in( model_path , label_map_path , video_src):
                         category_index
                         )
 
-                print(detected_labels)
+                #print(detected_labels)
                 vis_util.visualize_boxes_and_labels_on_image_array(
                         image_np,
                         output_dict['detection_boxes'],
